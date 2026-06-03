@@ -1,0 +1,586 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: transparent; color: var(--color-text-primary); }
+.app { max-width: 680px; margin: 0 auto; padding: 1rem 0; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-badge { width: 36px; height: 36px; border-radius: 8px; background: #185FA5; display: flex; align-items: center; justify-content: center; color: #E6F1FB; font-weight: 500; font-size: 13px; }
+.logo-text { font-size: 18px; font-weight: 500; }
+.logo-sub { font-size: 12px; color: var(--color-text-secondary); }
+.streak { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-secondary); }
+.streak span { font-weight: 500; color: var(--color-text-primary); }
+.nav { display: flex; gap: 4px; margin-bottom: 1.5rem; background: var(--color-background-secondary); padding: 4px; border-radius: var(--border-radius-lg); }
+.nav-btn { flex: 1; padding: 8px 4px; border: none; background: transparent; border-radius: 8px; font-size: 12px; color: var(--color-text-secondary); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s; font-family: var(--font-sans); }
+.nav-btn i { font-size: 18px; }
+.nav-btn.active { background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); font-weight: 500; }
+.nav-btn:hover:not(.active) { background: var(--color-background-primary); color: var(--color-text-primary); }
+.section { display: none; }
+.section.active { display: block; }
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+.stat-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; }
+.stat-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.stat-val { font-size: 22px; font-weight: 500; }
+.stat-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+.task-list { display: flex; flex-direction: column; gap: 10px; }
+.task-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: border-color 0.15s; }
+.task-card:hover { border-color: var(--color-border-primary); }
+.task-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.task-icon.vocab { background: #E6F1FB; color: #185FA5; }
+.task-icon.diary { background: #E1F5EE; color: #0F6E56; }
+.task-icon.opinion { background: #FAEEDA; color: #854F0B; }
+.task-icon.review { background: #FAECE7; color: #993C1D; }
+.task-info { flex: 1; }
+.task-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+.task-desc { font-size: 12px; color: var(--color-text-secondary); }
+.task-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500; }
+.badge-due { background: #FCEBEB; color: #A32D2D; }
+.badge-ok { background: #EAF3DE; color: #3B6D11; }
+.badge-new { background: #E6F1FB; color: #185FA5; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.quiz-word { font-size: 30px; font-weight: 500; text-align: center; padding: 1.5rem 0 0.5rem; letter-spacing: 0.02em; }
+.quiz-phonetic { text-align: center; font-size: 13px; color: var(--color-text-secondary); margin-bottom: 0.5rem; font-family: var(--font-mono); }
+.quiz-sentence { text-align: center; font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.25rem; font-style: italic; line-height: 1.5; padding: 0 1rem; }
+.quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+.opt-btn { padding: 14px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); font-size: 13px; cursor: pointer; text-align: left; transition: all 0.15s; font-family: var(--font-sans); color: var(--color-text-primary); line-height: 1.4; }
+.opt-btn:hover:not(:disabled) { border-color: #185FA5; background: #E6F1FB; color: #185FA5; }
+.opt-btn.correct { border-color: #3B6D11; background: #EAF3DE; color: #3B6D11; }
+.opt-btn.wrong { border-color: #A32D2D; background: #FCEBEB; color: #A32D2D; }
+.progress-bar-wrap { height: 4px; background: var(--color-background-secondary); border-radius: 2px; margin-bottom: 1rem; }
+.progress-bar { height: 4px; background: #185FA5; border-radius: 2px; transition: width 0.3s; }
+.quiz-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: 13px; color: var(--color-text-secondary); }
+.action-row { display: flex; gap: 8px; margin-top: 1rem; }
+.btn { padding: 10px 20px; border-radius: var(--border-radius-md); font-size: 14px; cursor: pointer; font-family: var(--font-sans); font-weight: 500; transition: all 0.15s; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); }
+.btn:hover { background: var(--color-background-secondary); }
+.btn-primary { background: #185FA5; color: #E6F1FB; border-color: #185FA5; }
+.btn-primary:hover { background: #0C447C; }
+.btn-full { width: 100%; display: block; text-align: center; }
+textarea { width: 100%; padding: 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; font-family: var(--font-sans); color: var(--color-text-primary); background: var(--color-background-primary); resize: vertical; min-height: 140px; line-height: 1.6; }
+textarea:focus { outline: none; border-color: #185FA5; }
+.label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; display: block; }
+.feedback-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px; font-size: 14px; line-height: 1.7; margin-top: 12px; }
+.feedback-box h4 { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; }
+.review-item { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+.review-word { font-weight: 500; font-size: 15px; flex: 1; }
+.review-def { font-size: 13px; color: var(--color-text-secondary); }
+.srs-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+.srs-1 { background: #FCEBEB; color: #A32D2D; }
+.srs-2 { background: #FAEEDA; color: #854F0B; }
+.srs-3 { background: #EAF3DE; color: #3B6D11; }
+.srs-4 { background: #E6F1FB; color: #185FA5; }
+.loading-spinner { text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 14px; }
+.loading-spinner i { font-size: 24px; display: block; margin-bottom: 8px; animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.result-screen { text-align: center; padding: 2rem 1rem; }
+.result-score { font-size: 48px; font-weight: 500; color: #185FA5; }
+.result-label { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; margin-bottom: 1.5rem; }
+.result-details { display: flex; justify-content: center; gap: 2rem; font-size: 14px; margin-bottom: 1.5rem; }
+.result-details div { text-align: center; }
+.result-details .num { font-size: 20px; font-weight: 500; }
+.topic-chip { display: inline-block; padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--color-border-secondary); font-size: 13px; cursor: pointer; margin: 4px; transition: all 0.15s; }
+.topic-chip.selected { background: #185FA5; color: #E6F1FB; border-color: #185FA5; }
+.topic-chip:hover:not(.selected) { border-color: #185FA5; }
+.section-title { font-size: 16px; font-weight: 500; margin-bottom: 1rem; }
+.section-sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1rem; }
+.level-tag { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 500; margin-left: 6px; vertical-align: middle; }
+.level-b2 { background: #FAEEDA; color: #854F0B; }
+.level-c1 { background: #FAECE7; color: #993C1D; }
+.curve-visual { display: flex; align-items: flex-end; gap: 4px; height: 60px; margin: 12px 0; }
+.curve-bar { flex: 1; border-radius: 3px 3px 0 0; }
+.curve-label { display: flex; gap: 4px; }
+.curve-label span { flex: 1; font-size: 10px; color: var(--color-text-secondary); text-align: center; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-badge">英検</div>
+    <div>
+      <div class="logo-text">EikenAI <span style="font-size:12px; color:#854F0B; font-weight:400">B2〜C1</span></div>
+      <div class="logo-sub">準1級・1級 AI学習パートナー</div>
+    </div>
+  </div>
+  <div class="streak">
+    <i class="ti ti-flame" style="color:#EF9F27"></i>
+    連続 <span id="streakCount">7</span> 日
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="switchTab('home')"><i class="ti ti-home" aria-hidden="true"></i>今日</button>
+  <button class="nav-btn" onclick="switchTab('vocab')"><i class="ti ti-book" aria-hidden="true"></i>語彙</button>
+  <button class="nav-btn" onclick="switchTab('writing')"><i class="ti ti-pencil" aria-hidden="true"></i>英作文</button>
+  <button class="nav-btn" onclick="switchTab('review')"><i class="ti ti-refresh" aria-hidden="true"></i>復習</button>
+  <button class="nav-btn" onclick="switchTab('stats')"><i class="ti ti-chart-bar" aria-hidden="true"></i>記録</button>
+</div>
+
+<!-- HOME -->
+<div id="tab-home" class="section active">
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">本日の正答率</div>
+      <div class="stat-val" id="todayAcc">—</div>
+      <div class="stat-sub">語彙テスト</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">要復習</div>
+      <div class="stat-val" style="color:#A32D2D">8</div>
+      <div class="stat-sub">忘却曲線</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">習得語数</div>
+      <div class="stat-val">342</div>
+      <div class="stat-sub">累計</div>
+    </div>
+  </div>
+  <p class="section-title">今日のタスク</p>
+  <div class="task-list">
+    <div class="task-card" onclick="switchTab('vocab')">
+      <div class="task-icon vocab"><i class="ti ti-ab" aria-hidden="true"></i></div>
+      <div class="task-info">
+        <div class="task-title">語彙・熟語テスト <span class="level-tag level-b2">B2</span><span class="level-tag level-c1">C1</span></div>
+        <div class="task-desc">準1級・1級レベル 10問（例文付き）</div>
+      </div>
+      <span class="task-badge badge-due">未完了</span>
+    </div>
+    <div class="task-card" onclick="switchTab('review')">
+      <div class="task-icon review"><i class="ti ti-refresh" aria-hidden="true"></i></div>
+      <div class="task-info">
+        <div class="task-title">忘却曲線復習</div>
+        <div class="task-desc">8語が期限切れ</div>
+      </div>
+      <span class="task-badge badge-due">要復習</span>
+    </div>
+    <div class="task-card" onclick="switchTab('writing')">
+      <div class="task-icon diary"><i class="ti ti-notebook" aria-hidden="true"></i></div>
+      <div class="task-info">
+        <div class="task-title">英語日記</div>
+        <div class="task-desc">B2レベルの表現を意識して書く</div>
+      </div>
+      <span class="task-badge badge-new">新規</span>
+    </div>
+    <div class="task-card" onclick="switchTab('writing')">
+      <div class="task-icon opinion"><i class="ti ti-message-2" aria-hidden="true"></i></div>
+      <div class="task-info">
+        <div class="task-title">意見英作文</div>
+        <div class="task-desc">準1級・1級形式 AIフィードバック付き</div>
+      </div>
+      <span class="task-badge badge-new">新規</span>
+    </div>
+  </div>
+</div>
+
+<!-- VOCAB QUIZ -->
+<div id="tab-vocab" class="section">
+  <div id="quiz-main">
+    <div id="quiz-setup">
+      <p class="section-title">語彙・熟語テスト</p>
+      <div class="card">
+        <span class="label">英検レベル</span>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1rem">
+          <span class="topic-chip selected" data-level="準1級" onclick="selectLevel(this)">準1級 <span class="level-tag level-b2">B2</span></span>
+          <span class="topic-chip" data-level="1級" onclick="selectLevel(this)">1級 <span class="level-tag level-c1">C1</span></span>
+          <span class="topic-chip" data-level="混合" onclick="selectLevel(this)">混合</span>
+        </div>
+        <span class="label">カテゴリ</span>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1rem">
+          <span class="topic-chip selected" onclick="selectChip(this,'cat')">語彙</span>
+          <span class="topic-chip" onclick="selectChip(this,'cat')">熟語・慣用句</span>
+          <span class="topic-chip" onclick="selectChip(this,'cat')">コロケーション</span>
+        </div>
+        <span class="label">問題数</span>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:1.25rem">
+          <span class="topic-chip" onclick="selectChip(this,'count')">5問</span>
+          <span class="topic-chip selected" onclick="selectChip(this,'count')">10問</span>
+          <span class="topic-chip" onclick="selectChip(this,'count')">20問</span>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="startQuiz()">テスト開始 ↗</button>
+      </div>
+    </div>
+
+    <div id="quiz-active" style="display:none">
+      <div class="quiz-meta">
+        <span id="qNum">1 / 10</span>
+        <span id="qLevel" style="font-size:11px"></span>
+        <span id="qScore">正解: 0</span>
+      </div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="qProgress" style="width:10%"></div></div>
+      <div class="quiz-word" id="qWord">—</div>
+      <div class="quiz-phonetic" id="qPhon"></div>
+      <div class="quiz-sentence" id="qSentence"></div>
+      <div class="quiz-options" id="qOptions"></div>
+      <div id="qFeedback" style="display:none" class="feedback-box"></div>
+      <button id="qNextBtn" style="display:none; margin-top:10px;" class="btn btn-primary btn-full" onclick="nextQuestion()">次へ →</button>
+    </div>
+
+    <div id="quiz-result" style="display:none" class="result-screen">
+      <div class="result-score" id="rScore">—</div>
+      <div class="result-label">正答率</div>
+      <div class="result-details">
+        <div><div class="num" id="rCorrect">—</div><div>正解</div></div>
+        <div><div class="num" id="rWrong">—</div><div>不正解</div></div>
+        <div><div class="num" id="rAdded">—</div><div>復習追加</div></div>
+      </div>
+      <button class="btn btn-primary" onclick="resetQuiz()" style="margin-right:8px">もう一度</button>
+      <button class="btn" onclick="switchTab('review')">復習へ</button>
+    </div>
+  </div>
+</div>
+
+<!-- WRITING -->
+<div id="tab-writing" class="section">
+  <p class="section-title">英作文 &amp; フィードバック</p>
+  <div style="display:flex; gap:6px; margin-bottom:1rem">
+    <span class="topic-chip selected" id="wDiary" onclick="selectWritingMode('diary')">英語日記</span>
+    <span class="topic-chip" id="wOpinion" onclick="selectWritingMode('opinion')">意見英作文</span>
+  </div>
+  <div id="writingDiary">
+    <div class="card">
+      <span class="label">今日の日記（B2レベルの語彙・表現を積極的に使おう）</span>
+      <textarea id="diaryText" placeholder="Today, I was struck by how rapidly technology is permeating every aspect of our lives..."></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <span style="font-size:12px; color:var(--color-text-secondary)" id="diaryCount">0語</span>
+        <button class="btn btn-primary" onclick="getFeedback('diary')">AIフィードバック ↗</button>
+      </div>
+    </div>
+    <div id="diaryFeedback" style="display:none"></div>
+  </div>
+  <div id="writingOpinion" style="display:none">
+    <div class="card">
+      <span class="label">本日のトピック <span class="level-tag level-b2">準1級形式</span></span>
+      <div style="padding:12px; background:var(--color-background-secondary); border-radius:var(--border-radius-md); font-size:14px; line-height:1.6; margin-bottom:1rem" id="opTopic"></div>
+      <button class="btn" onclick="newTopic()" style="font-size:12px; margin-bottom:1rem"><i class="ti ti-refresh" aria-hidden="true"></i> 別のトピック</button>
+      <span class="label">あなたの意見（120語以上 / 準1級目安）</span>
+      <textarea id="opinionText" placeholder="I strongly believe that... This is because, first of all,... Furthermore,... Therefore, it can be concluded that..."></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <span style="font-size:12px; color:var(--color-text-secondary)" id="opCount">0語</span>
+        <button class="btn btn-primary" onclick="getFeedback('opinion')">AIフィードバック ↗</button>
+      </div>
+    </div>
+    <div id="opinionFeedback" style="display:none"></div>
+  </div>
+</div>
+
+<!-- REVIEW -->
+<div id="tab-review" class="section">
+  <p class="section-title">忘却曲線復習</p>
+  <p class="section-sub">エビングハウスの忘却曲線に基づき、最適なタイミングで復習を出題します。</p>
+  <div class="card" style="margin-bottom:1rem">
+    <div style="font-size:13px; font-weight:500; margin-bottom:8px;">復習スケジュール（間隔反復）</div>
+    <div class="curve-visual">
+      <div class="curve-bar" style="height:90%; background:#A32D2D; opacity:0.8"></div>
+      <div class="curve-bar" style="height:65%; background:#E24B4A; opacity:0.7"></div>
+      <div class="curve-bar" style="height:45%; background:#EF9F27; opacity:0.7"></div>
+      <div class="curve-bar" style="height:30%; background:#639922; opacity:0.7"></div>
+      <div class="curve-bar" style="height:20%; background:#378ADD; opacity:0.7"></div>
+      <div class="curve-bar" style="height:12%; background:#185FA5; opacity:0.7"></div>
+    </div>
+    <div class="curve-label"><span>初回</span><span>1日</span><span>3日</span><span>1週</span><span>2週</span><span>1月</span></div>
+  </div>
+  <div style="display:flex; gap:6px; margin-bottom:1rem; flex-wrap:wrap">
+    <span class="srs-badge srs-1">要緊急 <strong>3</strong></span>
+    <span class="srs-badge srs-2">1日後 <strong>5</strong></span>
+    <span class="srs-badge srs-3">3日後 <strong>12</strong></span>
+    <span class="srs-badge srs-4">1週後 <strong>8</strong></span>
+  </div>
+  <button class="btn btn-primary btn-full" onclick="startReviewSession()" style="margin-bottom:1rem">今日の復習を開始（8語）↗</button>
+  <div id="reviewList">
+    <p style="font-size:13px; font-weight:500; margin-bottom:8px; color:var(--color-text-secondary)">要緊急 — 3語</p>
+    <div id="reviewItems"></div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="tab-stats" class="section">
+  <p class="section-title">学習記録</p>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">総学習日数</div><div class="stat-val">23</div></div>
+    <div class="stat-card"><div class="stat-label">正答率平均</div><div class="stat-val">72%</div></div>
+    <div class="stat-card"><div class="stat-label">作文本数</div><div class="stat-val">15</div></div>
+  </div>
+  <div class="card" style="margin-bottom:1rem">
+    <div style="font-size:13px; font-weight:500; margin-bottom:12px">今週の語彙習得</div>
+    <div style="display:flex; align-items:flex-end; gap:8px; height:80px">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="flex:1;width:100%;background:#185FA5;border-radius:3px 3px 0 0;height:60%"></div><span style="font-size:10px;color:var(--color-text-secondary)">月</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="flex:1;width:100%;background:#185FA5;border-radius:3px 3px 0 0;height:80%"></div><span style="font-size:10px;color:var(--color-text-secondary)">火</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="flex:1;width:100%;background:#185FA5;border-radius:3px 3px 0 0;height:50%"></div><span style="font-size:10px;color:var(--color-text-secondary)">水</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="flex:1;width:100%;background:#185FA5;border-radius:3px 3px 0 0;height:90%"></div><span style="font-size:10px;color:var(--color-text-secondary)">木</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="flex:1;width:100%;background:#185FA5;border-radius:3px 3px 0 0;height:70%"></div><span style="font-size:10px;color:var(--color-text-secondary)">金</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="flex:1;width:100%;background:#B5D4F4;border-radius:3px 3px 0 0;height:30%"></div><span style="font-size:10px;color:var(--color-text-secondary)">土</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="flex:1;width:100%;background:#B5D4F4;border-radius:3px 3px 0 0;height:20%"></div><span style="font-size:10px;color:var(--color-text-secondary)">日</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:13px; font-weight:500; margin-bottom:12px">弱点カテゴリ</div>
+    <div style="display:flex; flex-direction:column; gap:8px">
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px"><span>コロケーション</span><span style="color:#A32D2D">51%</span></div>
+        <div style="height:6px; background:var(--color-background-secondary); border-radius:3px"><div style="height:6px;width:51%;background:#E24B4A;border-radius:3px"></div></div>
+      </div>
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px"><span>熟語・慣用句</span><span style="color:#854F0B">63%</span></div>
+        <div style="height:6px; background:var(--color-background-secondary); border-radius:3px"><div style="height:6px;width:63%;background:#EF9F27;border-radius:3px"></div></div>
+      </div>
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px"><span>語彙（準1級）</span><span style="color:#854F0B">69%</span></div>
+        <div style="height:6px; background:var(--color-background-secondary); border-radius:3px"><div style="height:6px;width:69%;background:#EF9F27;border-radius:3px"></div></div>
+      </div>
+      <div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px"><span>語彙（1級）</span><span style="color:#A32D2D">44%</span></div>
+        <div style="height:6px; background:var(--color-background-secondary); border-radius:3px"><div style="height:6px;width:44%;background:#E24B4A;border-radius:3px"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const quizData = {
+  "準1級": [
+    { word: "alleviate", phonetic: "/əˈliːvieɪt/", level: "準1級", sentence: "The new policy aims to ___ the financial burden on low-income families.", meaning: "（苦痛・問題を）和らげる", options: ["（苦痛・問題を）和らげる", "悪化させる", "調査する", "廃止する"], correct: 0 },
+    { word: "scrutinize", phonetic: "/ˈskruːtɪnaɪz/", level: "準1級", sentence: "The committee decided to ___ the financial records in detail.", meaning: "精査する・じっくり調べる", options: ["無視する", "精査する・じっくり調べる", "公開する", "簡略化する"], correct: 1 },
+    { word: "deteriorate", phonetic: "/dɪˈtɪəriəreɪt/", level: "準1級", sentence: "His health began to ___ after years of overwork.", meaning: "悪化する", options: ["回復する", "安定する", "悪化する", "変化する"], correct: 2 },
+    { word: "come to terms with", phonetic: "", level: "準1級", sentence: "It took her years to ___ the loss of her career.", meaning: "〜を受け入れる・折り合いをつける", options: ["〜を否定する", "〜に勝る", "〜を拒絶する", "〜を受け入れる・折り合いをつける"], correct: 3 },
+    { word: "pragmatic", phonetic: "/præɡˈmætɪk/", level: "準1級", sentence: "Rather than idealistic, she took a ___ approach to solving the problem.", meaning: "実用主義的な・現実的な", options: ["実用主義的な・現実的な", "感情的な", "理想主義的な", "保守的な"], correct: 0 },
+    { word: "exacerbate", phonetic: "/ɪɡˈzæsəbeɪt/", level: "準1級", sentence: "The drought will ___ the food shortage in the region.", meaning: "（問題を）悪化させる", options: ["解決する", "緩和する", "（問題を）悪化させる", "防ぐ"], correct: 2 },
+    { word: "unprecedented", phonetic: "/ʌnˈpresɪdentɪd/", level: "準1級", sentence: "The pandemic caused ___ disruption to the global economy.", meaning: "前例のない", options: ["予想された", "一般的な", "前例のない", "繰り返された"], correct: 2 },
+    { word: "be attributed to", phonetic: "", level: "準1級", sentence: "The success of the project can ___ the team's dedication.", meaning: "〜に起因する・〜のおかげである", options: ["〜に起因する・〜のおかげである", "〜を超える", "〜に反対する", "〜を無視する"], correct: 0 },
+    { word: "mitigate", phonetic: "/ˈmɪtɪɡeɪt/", level: "準1級", sentence: "Green spaces in cities can help ___ the effects of urban heat.", meaning: "軽減する", options: ["拡大する", "軽減する", "強調する", "評価する"], correct: 1 },
+    { word: "compelling", phonetic: "/kəmˈpelɪŋ/", level: "準1級", sentence: "The documentary made a ___ case for renewable energy.", meaning: "説得力のある", options: ["曖昧な", "説得力のある", "反論の余地がある", "退屈な"], correct: 1 },
+    { word: "in the wake of", phonetic: "", level: "準1級", sentence: "___ the financial crisis, many companies went bankrupt.", meaning: "〜の結果として・〜の後に", options: ["〜に先立って", "〜に反して", "〜の結果として・〜の後に", "〜にもかかわらず"], correct: 2 },
+    { word: "stringent", phonetic: "/ˈstrɪndʒənt/", level: "準1級", sentence: "The new law imposes ___ penalties on environmental violations.", meaning: "厳格な", options: ["寛大な", "厳格な", "曖昧な", "任意の"], correct: 1 },
+  ],
+  "1級": [
+    { word: "ameliorate", phonetic: "/əˈmiːliəreɪt/", level: "1級", sentence: "Foreign aid was sent to ___ the suffering caused by the disaster.", meaning: "改善する・好転させる", options: ["改善する・好転させる", "妨害する", "調査する", "悪化させる"], correct: 0 },
+    { word: "ubiquitous", phonetic: "/juːˈbɪkwɪtəs/", level: "1級", sentence: "Smartphones have become ___ in modern society.", meaning: "いたるところにある・遍在する", options: ["希少な", "危険な", "いたるところにある・遍在する", "時代遅れの"], correct: 2 },
+    { word: "equivocal", phonetic: "/ɪˈkwɪvəkl/", level: "1級", sentence: "The politician gave an ___ answer that satisfied no one.", meaning: "曖昧な・どちらとも取れる", options: ["明快な", "曖昧な・どちらとも取れる", "直接的な", "誠実な"], correct: 1 },
+    { word: "perfunctory", phonetic: "/pəˈfʌŋktəri/", level: "1級", sentence: "He gave the report only a ___ glance before signing off.", meaning: "形式的な・おざなりな", options: ["念入りな", "形式的な・おざなりな", "批判的な", "詳細な"], correct: 1 },
+    { word: "incumbent upon", phonetic: "", level: "1級", sentence: "It is ___ every citizen to participate in democracy.", meaning: "〜の義務である", options: ["〜の自由である", "〜の義務である", "〜の選択肢である", "〜の権利を超える"], correct: 1 },
+    { word: "propitious", phonetic: "/prəˈpɪʃəs/", level: "1級", sentence: "The calm weather provided ___ conditions for the expedition.", meaning: "好都合な・縁起の良い", options: ["不利な", "危険な", "好都合な・縁起の良い", "不確かな"], correct: 2 },
+    { word: "acrimony", phonetic: "/ˈækrɪməni/", level: "1級", sentence: "The divorce proceedings were marked by considerable ___.", meaning: "辛辣さ・険悪さ", options: ["協調性", "辛辣さ・険悪さ", "公平さ", "誠実さ"], correct: 1 },
+    { word: "contend with", phonetic: "", level: "1級", sentence: "Developing nations must ___ multiple crises simultaneously.", meaning: "〜に立ち向かう・〜と格闘する", options: ["〜を無視する", "〜から逃げる", "〜に立ち向かう・〜と格闘する", "〜を悪化させる"], correct: 2 },
+  ],
+};
+
+const opinionTopics = [
+  { tag: "準1級", text: "Some people say that governments should invest more in public transportation rather than building new roads. Do you agree with this opinion? Write your opinion in English, giving two reasons to support it." },
+  { tag: "準1級", text: "Some people say that companies should be required by law to hire a certain percentage of workers over the age of 55. Do you agree with this opinion? Write your opinion in English, giving two reasons to support it." },
+  { tag: "1級", text: "It has been argued that artificial intelligence will ultimately prove more harmful than beneficial to humanity. To what extent do you agree or disagree with this view? Discuss your position with reference to specific examples." },
+  { tag: "準1級", text: "Some people say that children today are spending too much time using digital devices and not enough time engaging in physical activities. Do you agree with this opinion? Give two reasons to support your answer." },
+  { tag: "1級", text: "Economic growth and environmental sustainability are fundamentally incompatible goals. Discuss this statement, drawing on specific evidence and examples to support your argument." },
+  { tag: "準1級", text: "Some people believe that university education should be free for all students. Do you agree with this opinion? Give two reasons to support your answer." },
+];
+
+const reviewWords = [
+  { word: "alleviate", def: "（苦痛・問題を）和らげる", level: 1, next: "今日" },
+  { word: "exacerbate", def: "（問題を）悪化させる", level: 1, next: "今日" },
+  { word: "ubiquitous", def: "いたるところにある・遍在する", level: 1, next: "今日" },
+  { word: "mitigate", def: "軽減する", level: 2, next: "明日" },
+  { word: "equivocal", def: "曖昧な・どちらとも取れる", level: 2, next: "明日" },
+  { word: "in the wake of", def: "〜の結果として・〜の後に", level: 2, next: "明日" },
+];
+
+let quizState = { questions: [], current: 0, score: 0, selectedLevel: '準1級', answered: false };
+let writingMode = 'diary';
+let currentTopicIdx = 0;
+
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const tabs = ['home','vocab','writing','review','stats'];
+  document.querySelectorAll('.nav-btn')[tabs.indexOf(tab)].classList.add('active');
+  if (tab === 'review') renderReview();
+}
+
+function selectLevel(el) {
+  el.closest('.card').querySelectorAll('[data-level]').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  quizState.selectedLevel = el.dataset.level;
+}
+
+function selectChip(el) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.topic-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function startQuiz() {
+  let pool = [];
+  if (quizState.selectedLevel === '混合') {
+    pool = [...quizData['準1級'], ...quizData['1級']];
+  } else {
+    pool = [...(quizData[quizState.selectedLevel] || quizData['準1級'])];
+  }
+  quizState.questions = pool.sort(() => Math.random() - 0.5).slice(0, 10);
+  quizState.current = 0;
+  quizState.score = 0;
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-active').style.display = 'block';
+  document.getElementById('quiz-result').style.display = 'none';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = quizState.questions[quizState.current];
+  const total = quizState.questions.length;
+  document.getElementById('qNum').textContent = (quizState.current + 1) + ' / ' + total;
+  document.getElementById('qScore').textContent = '正解: ' + quizState.score;
+  const lvTag = q.level === '1級' ? '<span class="level-tag level-c1">C1 / 1級</span>' : '<span class="level-tag level-b2">B2 / 準1級</span>';
+  document.getElementById('qLevel').innerHTML = lvTag;
+  document.getElementById('qProgress').style.width = ((quizState.current + 1) / total * 100) + '%';
+  document.getElementById('qWord').textContent = q.word;
+  document.getElementById('qPhon').textContent = q.phonetic || '';
+  document.getElementById('qSentence').textContent = q.sentence ? '例文: ' + q.sentence : '';
+  document.getElementById('qFeedback').style.display = 'none';
+  document.getElementById('qNextBtn').style.display = 'none';
+  quizState.answered = false;
+  const container = document.getElementById('qOptions');
+  container.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = () => answerQ(i, q.correct, btn, q);
+    container.appendChild(btn);
+  });
+}
+
+function answerQ(chosen, correct, btn, q) {
+  if (quizState.answered) return;
+  quizState.answered = true;
+  const btns = document.querySelectorAll('.opt-btn');
+  btns[correct].classList.add('correct');
+  if (chosen !== correct) { btn.classList.add('wrong'); } else { quizState.score++; }
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('qFeedback');
+  fb.style.display = 'block';
+  if (chosen === correct) {
+    fb.innerHTML = '<span style="color:#3B6D11">✓ 正解！</span> <strong>' + q.word + '</strong> = ' + q.meaning;
+  } else {
+    fb.innerHTML = '<span style="color:#A32D2D">✗ 不正解</span> — 正解は「<strong>' + q.meaning + '</strong>」です。復習リストに追加しました。';
+  }
+  document.getElementById('qNextBtn').style.display = 'block';
+  document.getElementById('qScore').textContent = '正解: ' + quizState.score;
+}
+
+function nextQuestion() {
+  quizState.current++;
+  if (quizState.current >= quizState.questions.length) { showResult(); } else { renderQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+  const total = quizState.questions.length;
+  const pct = Math.round(quizState.score / total * 100);
+  document.getElementById('rScore').textContent = pct + '%';
+  document.getElementById('rCorrect').textContent = quizState.score;
+  document.getElementById('rWrong').textContent = total - quizState.score;
+  document.getElementById('rAdded').textContent = total - quizState.score;
+  document.getElementById('todayAcc').textContent = pct + '%';
+}
+
+function resetQuiz() {
+  document.getElementById('quiz-setup').style.display = 'block';
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+}
+
+function selectWritingMode(mode) {
+  writingMode = mode;
+  document.getElementById('writingDiary').style.display = mode === 'diary' ? 'block' : 'none';
+  document.getElementById('writingOpinion').style.display = mode === 'opinion' ? 'block' : 'none';
+  document.getElementById('wDiary').classList.toggle('selected', mode === 'diary');
+  document.getElementById('wOpinion').classList.toggle('selected', mode === 'opinion');
+}
+
+function loadTopic() {
+  const t = opinionTopics[currentTopicIdx];
+  document.getElementById('opTopic').innerHTML = '<span class="level-tag ' + (t.tag === '1級' ? 'level-c1' : 'level-b2') + '">' + t.tag + '</span> ' + t.text;
+}
+
+function newTopic() {
+  currentTopicIdx = (currentTopicIdx + 1) % opinionTopics.length;
+  loadTopic();
+  document.getElementById('opinionFeedback').style.display = 'none';
+}
+
+document.getElementById('diaryText').addEventListener('input', function() {
+  const words = this.value.trim().split(/\s+/).filter(w => w).length;
+  document.getElementById('diaryCount').textContent = words + '語';
+});
+document.getElementById('opinionText').addEventListener('input', function() {
+  const words = this.value.trim().split(/\s+/).filter(w => w).length;
+  document.getElementById('opCount').textContent = words + '語';
+});
+
+async function getFeedback(type) {
+  const text = type === 'diary' ? document.getElementById('diaryText').value : document.getElementById('opinionText').value;
+  if (!text.trim() || text.trim().split(/\s+/).length < 5) { alert('もう少し書いてから送信してください。'); return; }
+  const fbDiv = document.getElementById(type === 'diary' ? 'diaryFeedback' : 'opinionFeedback');
+  fbDiv.style.display = 'block';
+  fbDiv.innerHTML = '<div class="loading-spinner"><i class="ti ti-loader-2" aria-hidden="true"></i>AIがフィードバックを生成中...</div>';
+
+  const sys = type === 'diary'
+    ? 'You are an expert EIKEN preparation teacher specializing in B2-C1 level (準1級・1級) English. Provide detailed feedback on the student\'s English diary in Japanese. Evaluate: 1) Grammar accuracy — list specific errors with corrections, 2) Vocabulary — flag words below B2 level and suggest EIKEN 準1級/1級 alternatives with examples, 3) Natural expression — suggest more idiomatic phrasings, 4) Areas of strength. Be specific, constructive, and use Japanese for explanations with English examples.'
+    : 'You are an expert EIKEN 準1級/1級 examiner. Provide detailed feedback on the student\'s opinion essay in Japanese. Score the essay on: Content (0-4), Organization (0-4), Vocabulary (0-4), Grammar (0-4) — maximum 16 points. Then provide specific feedback on: 1) Argument strength and coherence, 2) Grammar errors with corrections, 3) Vocabulary level (suggest 準1級/1級 vocabulary upgrades), 4) Essay structure (intro/body/conclusion), 5) One model sentence that could replace a weak one. Be rigorous and specific.';
+
+  const userMsg = type === 'diary'
+    ? `Please review my English diary (EIKEN 準1級/1級 target):\n\n${text}`
+    : `Please review my EIKEN opinion essay:\nTopic: "${document.getElementById('opTopic').textContent}"\n\nEssay:\n${text}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, messages: [{ role: 'user', content: userMsg }] })
+    });
+    const data = await resp.json();
+    const reply = data.content.map(b => b.text || '').join('');
+    fbDiv.innerHTML = '<div class="feedback-box"><h4><i class="ti ti-robot" aria-hidden="true"></i> AIフィードバック</h4>' + reply.replace(/\n/g, '<br>') + '</div>';
+  } catch(e) {
+    fbDiv.innerHTML = '<div class="feedback-box">フィードバックの取得中にエラーが発生しました。</div>';
+  }
+}
+
+function renderReview() {
+  const container = document.getElementById('reviewItems');
+  container.innerHTML = '';
+  reviewWords.filter(w => w.level === 1).forEach(w => {
+    const el = document.createElement('div');
+    el.className = 'review-item';
+    el.innerHTML = '<div style="flex:1"><div class="review-word">' + w.word + '</div><div class="review-def">' + w.def + '</div></div><span class="srs-badge srs-' + w.level + '">' + w.next + '</span>';
+    container.appendChild(el);
+  });
+}
+
+function startReviewSession() {
+  switchTab('vocab');
+  quizState.questions = reviewWords.map(w => ({
+    word: w.word, phonetic: '', level: '準1級', sentence: '',
+    meaning: w.def,
+    options: shuffle([w.def, '形式的な・おざなりな', '改善する', '前例のない']),
+    correct: 0
+  })).map(q => { q.correct = q.options.indexOf(q.meaning); return q; });
+  quizState.current = 0; quizState.score = 0;
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-active').style.display = 'block';
+  document.getElementById('quiz-result').style.display = 'none';
+  renderQuestion();
+}
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+loadTopic();
+renderReview();
+</script>
+</body>
+</html>
